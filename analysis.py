@@ -101,7 +101,7 @@ def max_rate_per_test(dataset):
     def update(result, key, testKey):
         value = dataset[key][testKey]["weak"]
         time = dataset[key][testKey]["durationSeconds"]
-        rate = value/time
+        rate = round(value/time, 3)
         result[testKey] = (key, rate)
 
     result = per_test(dataset, compare, update)
