@@ -9,7 +9,7 @@ pandas.set_option('display.max_columns', None)
 pandas.set_option('display.max_rows', None)
 
 def analyze(tests, file_path):
-    df = pandas.read_csv(file_path + '.csv')
+    df = pandas.read_csv(file_path.split(".")[0] + '.csv')
     #print(df.describe())
     for test in tests:
         df.hist(column=test)
@@ -20,7 +20,7 @@ def load_stats(stats_path):
     """
     Load the file with the test run output
     """
-    with open(stats_path + ".json", "r") as stats_file:
+    with open(stats_path, "r") as stats_file:
         dataset = json.loads(stats_file.read())
         return dataset
 
@@ -109,18 +109,29 @@ def max_rate_per_test(dataset):
     for key in result:
         print(key + ": " + str(result[key][1]) + " weak behaviors per second in iteration " + result[key][0])
 
+def total_time(dataset):
+    total = 0
+    for key in dataset:
+        if key != "randomSeed":
+            for test in dataset[key]:
+                if test != "params":
+                    total += dataset[key][test]["durationSeconds"]
+    print("Time spent tuning: {} seconds".format(total))
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("stats_path", help="Path to output to analyze")
+    parser.add_argument("--action", default="rate", help="Analysis to perform. Options are 'sum', 'rate', 'time' ")
     args = parser.parse_args()
     dataset = load_stats(args.stats_path)
-    tests = get_tests(dataset)
-    max_per_test(dataset)
-    print()
-    max_rate_per_test(dataset)
-    print()
-    convert_to_csv(dataset, args.stats_path)
+    if args.action == "sum":
+        max_per_test(dataset)
+    elif args.action == "rate":
+        max_rate_per_test(dataset)
+    elif args.action == "time":
+        total_time(dataset)
+    #convert_to_csv(dataset, args.stats_path)
+    #tests = get_tests(dataset)
     #analyze(tests, args.stats_path)
     #plt.show()
 
