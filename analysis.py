@@ -107,10 +107,14 @@ def max_rate_per_test(dataset):
     result = per_test(dataset, compare, update)
     print("Rate of weak behaviors:")
     #print("[", end='')
+    maxed = 0
     for key in result:
         #print("{}, ".format(result[key][1]), end='')
         print(key + ": " + str(result[key][1]) + " weak behaviors per second in iteration " + result[key][0])
+        if result[key][1] >= 6.4:
+            maxed += 1
     #print("]")
+    print("Reproducible tests: {}".format(maxed))
 
 def total_time(dataset):
     total = 0
