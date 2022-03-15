@@ -84,6 +84,7 @@ def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceilin
     maximized = 0
     maximized_tests = dict()
     min_rates = []
+    total_maxed = 0
     for stats in all_stats:
         maximized_tests[stats[0]] = 0
     for res in tests.items():
@@ -95,13 +96,16 @@ def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceilin
             if calculate_rate(stats, res[1][0], res[0]) >= ceiling_rate:
                 maximized_tests[stats[0]] = maximized_tests[stats[0]] + 1
                 maxed_rates += 1
+                total_maxed += 1
             print("    {}: {}".format(stats[0], stats[1][res[1][0]][res[0]]))
         if maxed_rates == len(all_stats):
             maximized += 1
         print()
     print("Maximized: {}".format(maximized))
     print(maximized_tests)
-    print(min_rates)
+    #print(min_rates)
+    print("Total Maxed: {}".format(total_maxed))
+
 
 def compare_greater_than(a, b):
     return a >= b

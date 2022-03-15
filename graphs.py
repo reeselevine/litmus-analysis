@@ -118,21 +118,49 @@ def per_test_vs_global():
     labels = [95, 98, 99, 99.9, 99.99, 99.999]
     parallel_unsmoothed_ceiling_log_rate = [19, 19, 19, 19, 19, 19]
     parallel_smoothed_ceiling_log_rate = [20, 19, 19, 19, 19, 19]
+    parallel_unsmoothed_global_log_rate = [17, 17, 17, 17, 16, 16]
+    parallel_smoothed_global_log_rate = [19, 19, 19, 18, 18, 18]
     parallel_unsmoothed_global_ceiling = [19, 19, 19, 19, 18, 18]
     parallel_smoothed_global_ceiling = [19, 19, 19, 19, 18, 18]
-    fig, ax = plt.subplots(1, 1, constrained_layout=True)
+    fig, ax = plt.subplots(1, 1, figsize=(12, 6), constrained_layout=True)
     x = np.arange(len(labels))  # the label locations
-    width = 0.15  # the width of the bars
-    ax.bar(x - 1.5 * width, parallel_unsmoothed_ceiling_log_rate, width, label='Unsmoothed Ceiling Log Rate Per Test')
-    ax.bar(x - .5 * width, parallel_smoothed_ceiling_log_rate, width, label='Smoothed Ceiling Log Rate Per Test')
-    ax.bar(x + .5 * width, parallel_unsmoothed_global_ceiling, width, label='Unsmoothed Global Ceiling')
-    ax.bar(x + 1.5 * width, parallel_smoothed_global_ceiling, width, label='Smoothed Global Ceiling')
+    width = 0.1  # the width of the bars
+    ax.bar(x - 2.5 * width, parallel_unsmoothed_ceiling_log_rate, width, label='Unsmoothed Ceiling Log Rate Per Test')
+    ax.bar(x - 1.5 * width, parallel_smoothed_ceiling_log_rate, width, label='Smoothed Ceiling Log Rate Per Test')
+    ax.bar(x - .5 * width, parallel_unsmoothed_global_log_rate, width, label='Unsmoothed Global Log Rate')
+    ax.bar(x + .5 * width, parallel_smoothed_global_log_rate, width, label='Smoothed Global Log Rate')
+    ax.bar(x + 1.5 * width, parallel_unsmoothed_global_ceiling, width, label='Unsmoothed Global Ceiling')
+    ax.bar(x + 2.5 * width, parallel_smoothed_global_ceiling, width, label='Smoothed Global Ceiling')
     ax.set_xticks(x, labels)
     ax.set_xlabel("Reproducibility Threshold")
     ax.set_ylabel("Number of Tests")
     ax.set_ylim([0, 32])
     fig.legend()
     plt.savefig("figure3.pdf")
+
+def per_test_vs_global_total():
+    labels = [95, 98, 99, 99.9, 99.99, 99.999]
+    parallel_unsmoothed_ceiling_log_rate = [89, 89, 89, 89, 88, 88]
+    parallel_smoothed_ceiling_log_rate = [91, 88, 88, 87, 86, 87]
+    parallel_unsmoothed_global_log_rate = [83, 83, 83, 83, 82, 82]
+    parallel_smoothed_global_log_rate = [86, 86, 86, 84, 83, 82]
+    parallel_unsmoothed_global_ceiling = [88, 87, 87, 85, 84, 84]
+    parallel_smoothed_global_ceiling = [88, 88, 88, 86, 85, 85]
+    fig, ax = plt.subplots(1, 1, figsize=(12, 6), constrained_layout=True)
+    x = np.arange(len(labels))  # the label locations
+    width = 0.1  # the width of the bars
+    ax.bar(x - 2.5 * width, parallel_unsmoothed_ceiling_log_rate, width, label='Unsmoothed Ceiling Log Rate Per Test')
+    ax.bar(x - 1.5 * width, parallel_smoothed_ceiling_log_rate, width, label='Smoothed Ceiling Log Rate Per Test')
+    ax.bar(x - .5 * width, parallel_unsmoothed_global_log_rate, width, label='Unsmoothed Global Log Rate')
+    ax.bar(x + .5 * width, parallel_smoothed_global_log_rate, width, label='Smoothed Global Log Rate')
+    ax.bar(x + 1.5 * width, parallel_unsmoothed_global_ceiling, width, label='Unsmoothed Global Ceiling')
+    ax.bar(x + 2.5 * width, parallel_smoothed_global_ceiling, width, label='Smoothed Global Ceiling')
+    ax.set_xticks(x, labels)
+    ax.set_xlabel("Reproducibility Threshold")
+    ax.set_ylabel("Number of Tests")
+    ax.set_ylim([0, 128])
+    fig.legend()
+    plt.savefig("figure3a.pdf")
 
 
 def time_budget():
@@ -332,6 +360,7 @@ def grouped_bar():
 means()
 reproducibility()
 per_test_vs_global()
+per_test_vs_global_total()
 time_budget()
 time_budget_unsmoothed()
 
