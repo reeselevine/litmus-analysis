@@ -12,6 +12,18 @@ class RateSumResult:
     def __str__(self):
         return "Rate Sum: {}, Min Rate: {}".format(self.rate_sum, self.min_rate)
 
+class GlobalResult:
+
+    def __init__(self, four, three, two, one, zero):
+        self.four = four
+        self.three = three
+        self.two = two
+        self.one = one
+        self.zero = zero
+
+    def __str__(self):
+        return "Four: {}, Three: {}, Two: {}, One: {}, Zero: {}".format(self.four, self.three, self.two, self.one, self.zero)
+
 def load_stats(stats_path):
     """
     Load the file with the test run output
@@ -20,7 +32,44 @@ def load_stats(stats_path):
         dataset = json.loads(stats_file.read())
         return dataset
 
-def analyze_combined(all_stats, to_max, calculate, compare, initial_best=0):
+def analyze_global(all_stats, to_max, calculate, compare, initial_best, ceiling_rate):
+    testKeys = []
+    best = initial_best
+    best_iter = None
+    for key in all_stats[0][1]["0"]:
+        if key != "params":
+            testKeys.append(key)
+    for iteration in all_stats[0][1]:
+        if iteration != "randomSeed":
+            result = calculate(all_stats, iteration,  testKeys)
+            if compare(result, best):
+                best = result
+                best_iter = iteration
+    print("Maximizing {} of weak behaviors".format(to_max))
+    maximized = 0
+    maximized_tests = dict()
+    total_maxed = 0
+    rates = []
+    log_rates = []
+    for stats in all_stats:
+        maximized_tests[stats[0]] = 0
+    for test in testKeys:
+        maxed_rates = 0
+        for stats in all_stats:
+            rate = calculate_rate(stats, best_iter, test)
+            if rate >= ceiling_rate:
+                maximized_tests[stats[0]] = maximized_tests[stats[0]] + 1
+                maxed_rates += 1
+                total_maxed += 1
+        if maxed_rates == len(all_stats):
+            maximized += 1
+    print(maximized_tests)
+    print("Best: {} in iteration {}".format(best, best_iter))
+    print("Maximized: {}".format(maximized))
+    print("Total Maxed: {}".format(total_maxed))
+
+
+def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceiling_rate):
     tests = {}
     for key in all_stats[0][1]["0"]:
         if key != "params":
@@ -43,7 +92,7 @@ def analyze_combined(all_stats, to_max, calculate, compare, initial_best=0):
         print("{}: {} in iteration {}".format(res[0], str(res[1][1]), res[1][0]))
         print ("  Details:")
         for stats in all_stats:
-            if calculate_rate(stats, res[1][0], res[0]) >= 6.4:
+            if calculate_rate(stats, res[1][0], res[0]) >= ceiling_rate:
                 maximized_tests[stats[0]] = maximized_tests[stats[0]] + 1
                 maxed_rates += 1
             print("    {}: {}".format(stats[0], stats[1][res[1][0]][res[0]]))
@@ -91,15 +140,7 @@ def calculate_rate(stats, key, testKey):
     rate = round(value/time, 3)
     return rate
 
-def max_sum(all_stats):
-    analyze_combined(all_stats, "sum", maximize_sum(calculate_total), compare_greater_than)
-
-def max_log_sum(all_stats):
-    def calculate(stats, key, testKey):
-        return math.log(calculate_total(stats, key, testKey) + 1, 2)
-    analyze_combined(all_stats, "log sum", maximize_sum(calculate), compare_greater_than)
-
-def max_rate(all_stats):
+def max_rate(all_stats, ceiling_rate):
     def max_rate(all_stats, key, testKey):
         rate_sum = 0
         min_rate = None
@@ -116,9 +157,9 @@ def max_rate(all_stats):
         else:
             return cur.rate_sum > best.rate_sum
 
-    analyze_combined(all_stats, "rate", max_rate, compare_rate_sum, RateSumResult(0, 0))
+    analyze_combined(all_stats, "rate", max_rate, compare_rate_sum, RateSumResult(0, 0), ceiling_rate)
 
-def max_log_rate(all_stats):
+def max_log_rate(all_stats, ceiling_rate):
     def max_log(all_stats, key, testKey):
         rate_sum = 0
         min_rate = None
@@ -129,51 +170,94 @@ def max_log_rate(all_stats):
                 min_rate = rate
         return RateSumResult(rate_sum, min_rate)
 
-    analyze_combined(all_stats, "log rate", max_log, compare_rate_sum, RateSumResult(0, 0))
+    analyze_combined(all_stats, "log rate", max_log, compare_rate_sum, RateSumResult(0, 0), ceiling_rate)
 
-def max_ceiling_log_rate(all_stats):
+def max_ceiling_log_rate(all_stats, ceiling_rate):
     def max_log_ceiling(all_stats, key, testKey):
         rate_sum = 0
         min_rate = None
         for stats in all_stats:
             rate = calculate_rate(stats, key, testKey)
-            rate_sum += math.log(min(rate, 6.4) + 1)
+            rate_sum += math.log(min(rate, ceiling_rate) + 1)
             if min_rate == None or rate < min_rate:
                 min_rate = rate
         return RateSumResult(rate_sum, min_rate)
 
-    analyze_combined(all_stats, "ceiling log rate", max_log_ceiling, compare_rate_sum, RateSumResult(0, 0))
+    analyze_combined(all_stats, "ceiling log rate", max_log_ceiling, compare_rate_sum, RateSumResult(0, 0), ceiling_rate)
 
-def max_tanh_rate(all_stats):
-    def calculate(stats, key, testKey):
-        return math.tanh(calculate_rate(stats, key, testKey))
-    analyze_combined(all_stats, "tanh rate", maximize_sum(calculate), compare_greater_than)
+def max_global_ceiling_rate(all_stats, ceiling_rate):
+    def max_ceiling(all_stats, key, testKeys):
+        rate_sum = 0
+        min_rate = None
+        tests = dict()
+        for testKey in testKeys:
+            tests[testKey] = 0
+        for stats in all_stats:
+            for testKey in testKeys:
+                rate = calculate_rate(stats, key, testKey)
+                if rate >= ceiling_rate:
+                    tests[testKey] = tests[testKey] + 1
+        result = dict()
+        for i in range(0, len(all_stats) + 1):
+            result[i] = 0
+        for testKey in testKeys:
+            result[tests[testKey]] = result[tests[testKey]] + 1
+        return result
 
-def max_min_rate(all_stats):
-    analyze_combined(all_stats, "max min rate", maximize_min(calculate_rate), compare_greater_than)
+    def compare(cur, best):
+        for i in range(len(all_stats), 0, -1):
+            if cur[i] < best[i]:
+                return False
+            elif cur[i] > best[i]:
+                return True
+        return False
+
+    initial_best = dict()
+    for i in range(0, len(all_stats) + 1):
+        initial_best[i] = 0
+
+    analyze_global(all_stats, "global ceiling rate", max_ceiling, compare, initial_best, ceiling_rate)
+
+def max_global_log_rate(all_stats, ceiling_rate):
+    def max_log_ceiling(all_stats, key, testKeys):
+        rate_sum = 0
+        min_rate = None
+        for stats in all_stats:
+            for testKey in testKeys:
+                rate = calculate_rate(stats, key, testKey)
+                rate_sum += math.log(rate + 1)
+                if min_rate == None or rate < min_rate:
+                    min_rate = rate
+        return RateSumResult(rate_sum, min_rate)
+
+    analyze_global(all_stats, "global log rate", max_log_ceiling, compare_rate_sum, RateSumResult(0, 0), ceiling_rate)
+
+
+def get_ceiling_rate(reproducibility, time_budget):
+    num_weak_behaviors = math.ceil(-math.log(1 - reproducibility))
+    return num_weak_behaviors/time_budget
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("stats_dir", help="Directory of stats files to combine")
-    parser.add_argument("--action", default="log-rate", help="Analysis to perform. Options are 'sum', 'rate', 'log-sum', 'log-rate', 'tanh-rate', 'min-rate', 'ceiling-log-rate'")
+    parser.add_argument("--action", default="log-rate", help="Analysis to perform. Options are 'rate', 'log-rate', 'ceiling-log-rate', 'global-log-rate' , 'global-ceiling-rate'")
+    parser.add_argument("--rep", default="99.999", help="Level of reproducibility.")
+    parser.add_argument("--budget", default="3", help="Time budget per test (seconds)")
     args = parser.parse_args()
     all_stats = []
     for stats_file in listdir(args.stats_dir):
         all_stats.append((stats_file.split(".")[0], load_stats(args.stats_dir + "/" + stats_file)))
-    if args.action == "sum":
-        max_sum(all_stats)
-    elif args.action == "log-sum":
-        max_log_sum(all_stats)
-    elif args.action == "rate":
-        max_rate(all_stats)
+    ceiling_rate = get_ceiling_rate(float(args.rep)/100, float(args.budget))
+    if args.action == "rate":
+        max_rate(all_stats, ceiling_rate)
     elif args.action == "log-rate":
-        max_log_rate(all_stats)
-    elif args.action == "tanh-rate":
-        max_tanh_rate(all_stats)
-    elif args.action == "min-rate":
-        max_min_rate(all_stats)
+        max_log_rate(all_stats, ceiling_rate)
     elif args.action == "ceiling-log-rate":
-        max_ceiling_log_rate(all_stats)
+        max_ceiling_log_rate(all_stats, ceiling_rate)
+    elif args.action == "global-log-rate":
+        max_global_log_rate(all_stats, ceiling_rate)
+    elif args.action == "global-ceiling-rate":
+        max_global_ceiling_rate(all_stats, ceiling_rate)
 
 if __name__ == "__main__":
     main()

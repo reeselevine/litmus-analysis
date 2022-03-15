@@ -89,6 +89,16 @@ def max_per_test(dataset):
     for key in result:
         print(key + ": " + str(result[key][1]) + " in iteration " + result[key][0])
 
+def harmonic_mean(data):
+    if sum(data) == 0:
+        return 0
+    recips = []
+    for v in data:
+        if v != 0:
+            recips.append(1/v)
+    print(recips)
+    return round(len(data)/sum(recips), 3)
+
 def max_rate_per_test(dataset):
     """
     Finds the max rate of weak behaviors per test
@@ -108,12 +118,24 @@ def max_rate_per_test(dataset):
     print("Rate of weak behaviors:")
     #print("[", end='')
     maxed = 0
+    weak = []
+    co_weak = []
+    co = []
     for key in result:
         #print("{}, ".format(result[key][1]), end='')
+        if "Mutations" in key:
+            co.append(result[key][1])
+        elif "Coherency" in key:
+            co_weak.append(result[key][1])
+        else:
+            weak.append(result[key][1])
         print(key + ": " + str(result[key][1]) + " weak behaviors per second in iteration " + result[key][0])
         if result[key][1] >= 6.4:
             maxed += 1
     #print("]")
+    print("Weak Mean: {}".format(round(sum(weak)/len(weak), 3)))
+    print("Coherence Weak Mean: {}".format(round(sum(co_weak)/len(co_weak), 3)))
+    print("Coherence Mean: {}".format(round(sum(co)/len(co), 3)))
     print("Reproducible tests: {}".format(maxed))
 
 def total_time(dataset):
