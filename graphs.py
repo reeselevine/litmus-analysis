@@ -48,22 +48,22 @@ def means():
     plt.savefig("figure1.pdf")
 
 def reproducibility():
-    labels = ["1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4", "8"]
-    parallel_no_stress = [19, 24, 26, 27, 31, 32, 32, 37, 37, 38]
-    parallel_log_rate = [50, 53, 56, 65, 72, 79, 80, 86, 86, 87]
-    parallel_ceiling_log_rate = [46, 48, 57, 62, 73, 80, 85, 88, 88, 89]
-    parallel_global_log_rate = [36, 38, 44, 57, 66, 73, 77, 80, 82, 83]
-    parallel_global_ceiling_rate = [45, 47, 51, 64, 69, 78, 80, 83, 84, 87]
+    labels = ["1/512", "1/256", "1/128", "1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4", "8"]
+    parallel_no_stress = [9, 14, 17, 19, 24, 26, 27, 31, 32, 32, 37, 37, 38]
+    parallel_log_rate = [23, 33, 45, 50, 53, 56, 65, 72, 79, 80, 86, 86, 87]
+    parallel_ceiling_rate = [35, 42, 48, 53, 55, 58, 68, 74, 82, 85, 88, 88, 89]
+    parallel_global_log_rate = [22, 35, 35, 36, 38, 44, 57, 66, 73, 77, 80, 82, 83]
+    parallel_global_ceiling_rate = [28, 35, 37, 45, 47, 51, 64, 69, 78, 80, 83, 84, 87]
     fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
     x = np.arange(len(labels))  # the label locations
     width = 0.15  # the width of the bars
     ax.bar(x - 2 * width, parallel_no_stress, width, label='Parallel Baseline (No Stress)')
     ax.bar(x - width, parallel_log_rate, width, label='Parallel, Log Rate Combination Per Test')
-    ax.bar(x, parallel_ceiling_log_rate, width, label='Parallel, Ceiling Log Rate Combination Per Test')
+    ax.bar(x, parallel_ceiling_rate, width, label='Parallel, Ceiling Rate Combination Per Test')
     ax.bar(x + width, parallel_global_log_rate, width, label='Parallel, Global Log Rate Combination')
-    ax.bar(x + 2 * width, parallel_global_ceiling_rate, width, label='Parallel, Global Ceiling Combination')
+    ax.bar(x + 2 * width, parallel_global_ceiling_rate, width, label='Parallel, Global Ceiling Rate Combination')
 
-    ax.set_xticks(x, labels, fontsize=8)
+    ax.set_xticks(x, labels, fontsize=6, rotation=45)
     ax.set_xlabel("Time Budget Per Test (Seconds)")
     ax.set_ylabel("Reproducible Tests")
     ax.set_ylim([0, 128])
