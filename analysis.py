@@ -133,9 +133,11 @@ def max_rate_per_test(dataset):
         if result[key][1] >= 6.4:
             maxed += 1
     #print("]")
+    all_tests = weak + co_weak + co
     print("Weak Mean: {}".format(round(sum(weak)/len(weak), 3)))
     print("Coherence Weak Mean: {}".format(round(sum(co_weak)/len(co_weak), 3)))
     print("Coherence Mean: {}".format(round(sum(co)/len(co), 3)))
+    print("All Mean: {}".format(round(sum(all_tests)/len(all_tests), 3)))
     print("Reproducible tests: {}".format(maxed))
 
 def total_time(dataset):

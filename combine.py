@@ -12,18 +12,6 @@ class RateSumResult:
     def __str__(self):
         return "Rate Sum: {}, Min Rate: {}".format(self.rate_sum, self.min_rate)
 
-class GlobalResult:
-
-    def __init__(self, four, three, two, one, zero):
-        self.four = four
-        self.three = three
-        self.two = two
-        self.one = one
-        self.zero = zero
-
-    def __str__(self):
-        return "Four: {}, Three: {}, Two: {}, One: {}, Zero: {}".format(self.four, self.three, self.two, self.one, self.zero)
-
 def load_stats(stats_path):
     """
     Load the file with the test run output
@@ -65,8 +53,8 @@ def analyze_global(all_stats, to_max, calculate, compare, initial_best, ceiling_
             maximized += 1
     print(maximized_tests)
     print("Best: {} in iteration {}".format(best, best_iter))
-    print("Maximized: {}".format(maximized))
-    print("Total Maxed: {}".format(total_maxed))
+    print("Number of Tests Reproducible on All Devices: {}".format(maximized))
+    print("Number of Tests Reproducible: {}".format(total_maxed))
 
 
 def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceiling_rate):
@@ -90,21 +78,21 @@ def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceilin
     for res in tests.items():
         min_rates.append(res[1][1].min_rate)
         maxed_rates = 0
-        print("{}: {} in iteration {}".format(res[0], str(res[1][1]), res[1][0]))
-        print ("  Details:")
+        #print("{}: {} in iteration {}".format(res[0], str(res[1][1]), res[1][0]))
+        #print ("  Details:")
         for stats in all_stats:
             if calculate_rate(stats, res[1][0], res[0]) >= ceiling_rate:
                 maximized_tests[stats[0]] = maximized_tests[stats[0]] + 1
                 maxed_rates += 1
                 total_maxed += 1
-            print("    {}: {}".format(stats[0], stats[1][res[1][0]][res[0]]))
+            #print("    {}: {}".format(stats[0], stats[1][res[1][0]][res[0]]))
         if maxed_rates == len(all_stats):
             maximized += 1
-        print()
-    print("Maximized: {}".format(maximized))
-    print(maximized_tests)
+        #print()
+    print("Number of Tests Reproducible on All Devices: {}".format(maximized))
     #print(min_rates)
-    print("Total Maxed: {}".format(total_maxed))
+    print("Number of Tests Reproducible: {}".format(total_maxed))
+    print(maximized_tests)
 
 
 def compare_greater_than(a, b):
@@ -236,6 +224,20 @@ def max_global_log_rate(all_stats, ceiling_rate):
 
     analyze_global(all_stats, "global log rate", max_log_ceiling, compare_rate_sum, RateSumResult(0, 0), ceiling_rate)
 
+def max_global_ceiling_log_rate(all_stats, ceiling_rate):
+    def max_log_ceiling(all_stats, key, testKeys):
+        rate_sum = 0
+        min_rate = None
+        for stats in all_stats:
+            for testKey in testKeys:
+                rate = calculate_rate(stats, key, testKey)
+                rate_sum += math.log(min(rate, ceiling_rate) + 1)
+                if min_rate == None or rate < min_rate:
+                    min_rate = rate
+        return RateSumResult(rate_sum, min_rate)
+
+    analyze_global(all_stats, "global ceiling log rate", max_log_ceiling, compare_rate_sum, RateSumResult(0, 0), ceiling_rate)
+
 
 def get_ceiling_rate(reproducibility, time_budget):
     num_weak_behaviors = math.ceil(-math.log(1 - reproducibility))
@@ -244,7 +246,7 @@ def get_ceiling_rate(reproducibility, time_budget):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("stats_dir", help="Directory of stats files to combine")
-    parser.add_argument("--action", default="log-rate", help="Analysis to perform. Options are 'rate', 'log-rate', 'ceiling-log-rate', 'global-log-rate' , 'global-ceiling-rate'")
+    parser.add_argument("--action", default="log-rate", help="Analysis to perform. Options are 'rate', 'log-rate', 'ceiling-log-rate', 'global-log-rate' , 'global-ceiling-log-rate', 'global-ceiling-rate'")
     parser.add_argument("--rep", default="99.999", help="Level of reproducibility.")
     parser.add_argument("--budget", default="3", help="Time budget per test (seconds)")
     args = parser.parse_args()
@@ -260,6 +262,8 @@ def main():
         max_ceiling_log_rate(all_stats, ceiling_rate)
     elif args.action == "global-log-rate":
         max_global_log_rate(all_stats, ceiling_rate)
+    elif args.action == "global-ceiling-log-rate":
+        max_global_ceiling_log_rate(all_stats, ceiling_rate)
     elif args.action == "global-ceiling-rate":
         max_global_ceiling_rate(all_stats, ceiling_rate)
 

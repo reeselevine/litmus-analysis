@@ -26,9 +26,13 @@ def means():
     si_means = take_log([4.87, 9.429, 0.458, 0, 4.715, 22.295, 1.446, 0, 59.088, 53.378, 4.8, 33.28])
     parallel_no_stress_means = take_log([3.628, 0, 316.912, 0, 47.859, 0, 990.374, 0, 8007.971, 0, 354670.514, 0])
     parallel_means = take_log([15.676, 6994.569, 1816.608, 72.466, 81.543, 25100.945, 5349.179, 218.6, 22089.78, 58313.47, 251531.069, 6561.868])
+    si_no_stress_all_means = take_log([2.423, 0, 0, 0])
+    si_all_means = take_log([18.395, 22.829, 1.729, 8.32])
+    parallel_no_stress_all_means = take_log([2013.007, 0, 89031.586, 0])
+    parallel_all_means = take_log([5546.552, 23219.239, 64907.58, 1722.217])
     x = np.arange(len(labels))
     width = 0.2
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 6), constrained_layout=True)
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(12, 3), constrained_layout=True)
     ax1.bar(x - 1.5 * width, si_no_stress_means[0:4], width, label="Single Instance No Stress")
     ax1.bar(x - .5 * width, si_means[0:4], width, label="Single Instance")
     ax1.bar(x + .5 * width, parallel_no_stress_means[0:4], width, label="Parallel No Stress")
@@ -50,8 +54,15 @@ def means():
     ax3.set_ylim([0, 7])
     ax3.set_xticks(x, labels)
     ax3.set_title("Reversing po")
-    fig.supylabel("Average of Rates of Weak Behaviors Per Second (Log Scale)", fontsize=10)
-    fig.legend(loc=(0.8, 0.8))
+    ax4.bar(x - 1.5 * width, si_no_stress_all_means, width)
+    ax4.bar(x - .5 * width, si_all_means, width)
+    ax4.bar(x + .5 * width, parallel_no_stress_all_means, width)
+    ax4.bar(x + 1.5 * width, parallel_all_means, width)
+    ax4.set_ylim([0, 7])
+    ax4.set_xticks(x, labels)
+    ax4.set_title("Overall Average")
+    fig.supylabel("Average of Rates of Weak Behaviors Per Second (Log Scale)", fontsize=6)
+    fig.legend(loc=(0.05, 0.7), fontsize=6)
     plt.savefig("figure1.pdf")
 
 
@@ -96,10 +107,11 @@ def max_rate_per_test():
 
 
 def reproducibility():
-    labels = [95, 98, 99, 99.9, 99.99, 99.999]
-    parallel_no_stress = [19, 19, 18, 18, 17, 17]
-    parallel_log_rate = [17, 17, 17, 17, 17, 17]
-    parallel_ceiling_log_rate = [19, 19, 19, 19, 19, 19]
+    labels = [.015625, .03125, .0625, .125, .25, .5, 1, 2, 4, 8]
+    parallel_no_stress = [19, 24, 26, 27, 31, 32, 32, 37, 37, 38]
+    parallel_log_rate = [50, 53, 56, 65, 72, 79, 80, 86, 86, 87]
+    parallel_ceiling_log_rate = [46, 48, 57, 62, 73, 80, 85, 88, 88, 89]
+    parllel_global_log_rate = []
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
     x = np.arange(len(labels))  # the label locations
     width = 0.15  # the width of the bars
