@@ -2,24 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-
-def max_rate_for_device(title, ax, si_no_stress, si, parallel_no_stress, up, sp, set_xticks=False):
-    labels = ["Message Passing Default", "Message Passing Barrier Variant 1", "Message Passing Barrier Variant 2", "Message Passing Coherency", "Store Default", "Store Barrier Variant 1", "Store Barrier Variant 2", "Store Coherency", "Read RMW", "Read RMW Barrier 1", "Read RMW Barrier 2", "Read Coherency", "Load Buffer Default", "Load Buffer Barrier Variant 1", "Load Buffer Barrier Variant 2", "Load Buffer Coherency", "Store Buffer RMW", "Store Buffer RMW Barrier 1", "Store Buffer RMW Barrier 2", "Store Buffer Coherency", "2+2 Write RMW", "2+2 Write RMW Barrier 1", "2+2 Write RMW Barrier 2", "2+2 Write Coherency", "RR Mutations Default", "RR Mutations RMW", "RW Mutations Default", "RW Mutations RMW", "WR Mutations Default", "WR Mutations RMW", "WW Mutations Default", "WW Mutations RMW"]
-    x = np.arange(len(labels))  # the label locations
-    width = 0.15  # the width of the bars
-    ax.bar(x - 2 * width, si_no_stress, width, label='Single Instance No Stress', color="bisque")
-    ax.bar(x - width, si, width, label='Single Instance', color="lightcoral")
-    ax.bar(x, parallel_no_stress, width, label='Parallel No Stress', color="paleturquoise")
-    ax.bar(x + width, up, width, label='Unsmoothed Parallel', color="plum")
-    ax.bar(x + 2 * width, sp, width, label='Smoothed Parallel', color="seagreen")
-
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_title(title)
-    if set_xticks:
-        ax.set_xticks(x, labels, rotation=45, fontsize=6)
-    else:
-        ax.set_xticks([], [])
-
 def means():
     labels = ["Intel", "AMD", "Nvidia", "M1"]
     si_no_stress_means = take_log([0, 0, 0, 0, 0, 0, 0, 0, 9.693, 0, 0, 0])
@@ -65,6 +47,67 @@ def means():
     fig.legend(loc=(0.05, 0.7), fontsize=6)
     plt.savefig("figure1.pdf")
 
+def reproducibility():
+    labels = ["1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4", "8"]
+    parallel_no_stress = [19, 24, 26, 27, 31, 32, 32, 37, 37, 38]
+    parallel_log_rate = [50, 53, 56, 65, 72, 79, 80, 86, 86, 87]
+    parallel_ceiling_log_rate = [46, 48, 57, 62, 73, 80, 85, 88, 88, 89]
+    parallel_global_log_rate = [36, 38, 44, 57, 66, 73, 77, 80, 82, 83]
+    parallel_global_ceiling_rate = [45, 47, 51, 64, 69, 78, 80, 83, 84, 87]
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
+    x = np.arange(len(labels))  # the label locations
+    width = 0.15  # the width of the bars
+    ax.bar(x - 2 * width, parallel_no_stress, width, label='Parallel Baseline (No Stress)')
+    ax.bar(x - width, parallel_log_rate, width, label='Parallel, Log Rate Combination Per Test')
+    ax.bar(x, parallel_ceiling_log_rate, width, label='Parallel, Ceiling Log Rate Combination Per Test')
+    ax.bar(x + width, parallel_global_log_rate, width, label='Parallel, Global Log Rate Combination')
+    ax.bar(x + 2 * width, parallel_global_ceiling_rate, width, label='Parallel, Global Ceiling Combination')
+
+    ax.set_xticks(x, labels, fontsize=8)
+    ax.set_xlabel("Time Budget Per Test (Seconds)")
+    ax.set_ylabel("Reproducible Tests")
+    ax.set_ylim([0, 128])
+    ax.set_title("Reproducibility Strategies")
+
+    fig.legend(loc=(0.17, .75), fontsize=4)
+    plt.savefig("figure2.pdf")
+
+def global_reproducibility():
+    labels = ["1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4", "8"]
+    parallel_unsmoothed_global_ceiling_rate = [45, 47, 51, 64, 69, 78, 80, 83, 84, 87]
+    parallel_smoothed_global_ceiling_rate = [42, 47, 57, 65, 68, 71, 79, 82, 85, 88]
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
+    x = np.arange(len(labels))  # the label locations
+    width = 0.15  # the width of the bars
+    ax.bar(x - .5 * width, parallel_unsmoothed_global_ceiling_rate, width, label='Parallel Unsmoothed')
+    ax.bar(x + .5 * width, parallel_smoothed_global_ceiling_rate, width, label='Parallel Smoothed')
+    ax.set_xticks(x, labels, fontsize=8)
+    ax.set_xlabel("Time Budget Per Test (Seconds)")
+    ax.set_ylabel("Reproducible Tests")
+    ax.set_ylim([0, 128])
+    ax.set_title("Global Reproducibility of Smoothed vs Unsmoothed", fontsize=9)
+
+    fig.legend(loc=(0.17, .75), fontsize=6)
+    plt.savefig("figure3.pdf")
+
+
+
+def max_rate_for_device(title, ax, si_no_stress, si, parallel_no_stress, up, sp, set_xticks=False):
+    labels = ["Message Passing Default", "Message Passing Barrier Variant 1", "Message Passing Barrier Variant 2", "Message Passing Coherency", "Store Default", "Store Barrier Variant 1", "Store Barrier Variant 2", "Store Coherency", "Read RMW", "Read RMW Barrier 1", "Read RMW Barrier 2", "Read Coherency", "Load Buffer Default", "Load Buffer Barrier Variant 1", "Load Buffer Barrier Variant 2", "Load Buffer Coherency", "Store Buffer RMW", "Store Buffer RMW Barrier 1", "Store Buffer RMW Barrier 2", "Store Buffer Coherency", "2+2 Write RMW", "2+2 Write RMW Barrier 1", "2+2 Write RMW Barrier 2", "2+2 Write Coherency", "RR Mutations Default", "RR Mutations RMW", "RW Mutations Default", "RW Mutations RMW", "WR Mutations Default", "WR Mutations RMW", "WW Mutations Default", "WW Mutations RMW"]
+    x = np.arange(len(labels))  # the label locations
+    width = 0.15  # the width of the bars
+    ax.bar(x - 2 * width, si_no_stress, width, label='Single Instance No Stress', color="bisque")
+    ax.bar(x - width, si, width, label='Single Instance', color="lightcoral")
+    ax.bar(x, parallel_no_stress, width, label='Parallel No Stress', color="paleturquoise")
+    ax.bar(x + width, up, width, label='Unsmoothed Parallel', color="plum")
+    ax.bar(x + 2 * width, sp, width, label='Smoothed Parallel', color="seagreen")
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_title(title)
+    if set_xticks:
+        ax.set_xticks(x, labels, rotation=45, fontsize=6)
+    else:
+        ax.set_xticks([], [])
 
 
 def max_rate_per_test():
@@ -105,26 +148,6 @@ def max_rate_per_test():
     plt.savefig('maxed_rates_per_test.png')
     #plt.show()
 
-
-def reproducibility():
-    labels = [.015625, .03125, .0625, .125, .25, .5, 1, 2, 4, 8]
-    parallel_no_stress = [19, 24, 26, 27, 31, 32, 32, 37, 37, 38]
-    parallel_log_rate = [50, 53, 56, 65, 72, 79, 80, 86, 86, 87]
-    parallel_ceiling_log_rate = [46, 48, 57, 62, 73, 80, 85, 88, 88, 89]
-    parllel_global_log_rate = []
-    fig, ax = plt.subplots(1, 1, constrained_layout=True)
-    x = np.arange(len(labels))  # the label locations
-    width = 0.15  # the width of the bars
-    ax.bar(x - width, parallel_no_stress, width, label='Parallel Baseline (No Stress)')
-    ax.bar(x, parallel_log_rate, width, label='Parallel, Log Rate Combination')
-    ax.bar(x + width, parallel_ceiling_log_rate, width, label='Parallel, Ceiling Log Rate Combination')
-    ax.set_xticks(x, labels)
-    ax.set_xlabel("Reproducibility Threshold")
-    ax.set_ylabel("Number of Tests")
-    ax.set_ylim([0, 32])
-
-    fig.legend()
-    plt.savefig("figure2.pdf")
 
 def per_test_vs_global():
     labels = [95, 98, 99, 99.9, 99.99, 99.999]
@@ -371,8 +394,9 @@ def grouped_bar():
 #max_rate_per_test()
 means()
 reproducibility()
-per_test_vs_global()
-per_test_vs_global_total()
-time_budget()
-time_budget_unsmoothed()
+global_reproducibility()
+#per_test_vs_global()
+#per_test_vs_global_total()
+#time_budget()
+#time_budget_unsmoothed()
 

@@ -177,38 +177,36 @@ def max_ceiling_log_rate(all_stats, ceiling_rate):
 
     analyze_combined(all_stats, "ceiling log rate", max_log_ceiling, compare_rate_sum, RateSumResult(0, 0), ceiling_rate)
 
+class GlobalResult:
+
+    def __init__(self, rep_tests, log_of_rest):
+        self.rep_tests = rep_tests
+        self.log_of_rest = log_of_rest
+
+
+    def __str__(self):
+        return "Reproducible Tests: {}, Log Sum of Rest: {}".format(self.rep_tests, self.log_of_rest)
+
+
 def max_global_ceiling_rate(all_stats, ceiling_rate):
     def max_ceiling(all_stats, key, testKeys):
-        rate_sum = 0
-        min_rate = None
-        tests = dict()
-        for testKey in testKeys:
-            tests[testKey] = 0
+        result = GlobalResult(0, 0)
         for stats in all_stats:
             for testKey in testKeys:
                 rate = calculate_rate(stats, key, testKey)
                 if rate >= ceiling_rate:
-                    tests[testKey] = tests[testKey] + 1
-        result = dict()
-        for i in range(0, len(all_stats) + 1):
-            result[i] = 0
-        for testKey in testKeys:
-            result[tests[testKey]] = result[tests[testKey]] + 1
+                    result.rep_tests += 1
+                else:
+                    result.log_of_rest = result.log_of_rest + math.log(rate + 1)
         return result
 
     def compare(cur, best):
-        for i in range(len(all_stats), 0, -1):
-            if cur[i] < best[i]:
-                return False
-            elif cur[i] > best[i]:
-                return True
-        return False
+        if cur.rep_tests == best.rep_tests:
+            return cur.log_of_rest > best.log_of_rest
+        else:
+            return cur.rep_tests > best.rep_tests
 
-    initial_best = dict()
-    for i in range(0, len(all_stats) + 1):
-        initial_best[i] = 0
-
-    analyze_global(all_stats, "global ceiling rate", max_ceiling, compare, initial_best, ceiling_rate)
+    analyze_global(all_stats, "global ceiling rate", max_ceiling, compare, GlobalResult(0, 0), ceiling_rate)
 
 def max_global_log_rate(all_stats, ceiling_rate):
     def max_log_ceiling(all_stats, key, testKeys):
