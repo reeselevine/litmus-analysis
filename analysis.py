@@ -119,26 +119,36 @@ def max_rate_per_test(dataset):
     #print("[", end='')
     maxed = 0
     weak = []
+    weak_caught = 0
     co_weak = []
+    co_weak_caught = 0
     co = []
+    co_caught = 0
     for key in result:
         #print("{}, ".format(result[key][1]), end='')
         if "Mutations" in key:
             co.append(result[key][1])
+            if result[key][1] > 0:
+                co_caught += 1
         elif "Coherency" in key:
             co_weak.append(result[key][1])
+            if result[key][1] > 0:
+                co_weak_caught += 1
         else:
             weak.append(result[key][1])
+            if result[key][1] > 0:
+                weak_caught += 1
         print(key + ": " + str(result[key][1]) + " weak behaviors per second in iteration " + result[key][0])
         if result[key][1] >= 6.4:
             maxed += 1
     #print("]")
     all_tests = weak + co_weak + co
-    print("Weak Mean: {}".format(round(sum(weak)/len(weak), 3)))
-    print("Coherence Weak Mean: {}".format(round(sum(co_weak)/len(co_weak), 3)))
-    print("Coherence Mean: {}".format(round(sum(co)/len(co), 3)))
-    print("All Mean: {}".format(round(sum(all_tests)/len(all_tests), 3)))
+    print("Weak Mean: {}, Caught: {}".format(round(sum(weak)/len(weak), 3), weak_caught))
+    print("Coherence Weak Mean: {}, Caught: {}".format(round(sum(co_weak)/len(co_weak), 3), co_weak_caught))
+    print("Coherence Mean: {}, Caught: {}".format(round(sum(co)/len(co), 3), co_caught))
+    print("All Mean: {}, Caught: {}".format(round(sum(all_tests)/len(all_tests), 3), weak_caught + co_weak_caught + co_caught))
     print("Reproducible tests: {}".format(maxed))
+    print(all_tests)
 
 def total_time(dataset):
     total = 0
