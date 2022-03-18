@@ -159,10 +159,30 @@ def total_time(dataset):
                     total += dataset[key][test]["durationSeconds"]
     print("Time spent tuning: {} seconds".format(total))
 
+def checksum(dataset, is_si, i):
+    matched = True
+    for key in dataset:
+        if key != "randomSeed":
+            w = dataset[key]["params"]["testingWorkgroups"]
+            for test in dataset[key]:
+                if test != "params":
+                    total = dataset[key][test]["seq"] + dataset[key][test]["interleaved"] + dataset[key][test]["weak"]
+                    if is_si:
+                        expected = i
+                    else:
+                        expected = w * i * 256;
+                    if total != expected:
+                        print("Checksum did not match! Iteration: {}, Test: {}, Expected: {}, Actual: {}".format(key, test, expected, total))
+                        matched = False
+    if matched:
+        print("Checksum matched!")
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("stats_path", help="Path to output to analyze")
-    parser.add_argument("--action", default="rate", help="Analysis to perform. Options are 'sum', 'rate', 'time' ")
+    parser.add_argument("--action", default="rate", help="Analysis to perform. Options are 'sum', 'rate', 'time', 'checksum'")
+    parser.add_argument("--iterations", default="100", help="Number of iterations to compute checksum against")
+    parser.add_argument('--si', action='store_true', help="When computing checksum, signifies this was a single instance run, not parallel")
     args = parser.parse_args()
     dataset = load_stats(args.stats_path)
     if args.action == "sum":
@@ -171,11 +191,8 @@ def main():
         max_rate_per_test(dataset)
     elif args.action == "time":
         total_time(dataset)
-    #convert_to_csv(dataset, args.stats_path)
-    #tests = get_tests(dataset)
-    #analyze(tests, args.stats_path)
-    #plt.show()
-
+    elif args.action == "checksum":
+        checksum(dataset, args.si, int(args.iterations))
 
 if __name__ == "__main__":
     main()

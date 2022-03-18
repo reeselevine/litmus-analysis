@@ -35,7 +35,7 @@ def figure1():
     parallel_co_caught = take_pct([8, 7, 8, 8], 8)
     parallel_all_caught = take_pct([21, 30, 20, 24], 32)
 
-    total_caught = take_pct([3, 70, 81, 95], 128)
+    total_caught = take_pct([8, 70, 81, 95], 128)
 
     x = np.arange(len(labels))
     width = 0.2
