@@ -1,4 +1,5 @@
 import json
+import math
 import csv
 import argparse
 import pandas
@@ -99,7 +100,7 @@ def harmonic_mean(data):
     print(recips)
     return round(len(data)/sum(recips), 3)
 
-def max_rate_per_test(dataset):
+def max_rate_per_test(dataset, ceiling_rate):
     """
     Finds the max rate of weak behaviors per test
     """
@@ -139,7 +140,7 @@ def max_rate_per_test(dataset):
             if result[key][1] > 0:
                 weak_caught += 1
         print(key + ": " + str(result[key][1]) + " weak behaviors per second in iteration " + result[key][0])
-        if result[key][1] >= 6.4:
+        if result[key][1] >= ceiling_rate:
             maxed += 1
     #print("]")
     all_tests = weak + co_weak + co
@@ -177,18 +178,25 @@ def checksum(dataset, is_si, i):
     if matched:
         print("Checksum matched!")
 
+def get_ceiling_rate(reproducibility, time_budget):
+    num_weak_behaviors = math.ceil(-math.log(1 - reproducibility))
+    return num_weak_behaviors/time_budget
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("stats_path", help="Path to output to analyze")
     parser.add_argument("--action", default="rate", help="Analysis to perform. Options are 'sum', 'rate', 'time', 'checksum'")
     parser.add_argument("--iterations", default="100", help="Number of iterations to compute checksum against")
     parser.add_argument('--si', action='store_true', help="When computing checksum, signifies this was a single instance run, not parallel")
+    parser.add_argument("--rep", default="99.999", help="Level of reproducibility.")
+    parser.add_argument("--budget", default="3", help="Time budget per test (seconds)")
     args = parser.parse_args()
+    ceiling_rate = get_ceiling_rate(float(args.rep)/100, float(args.budget))
     dataset = load_stats(args.stats_path)
     if args.action == "sum":
         max_per_test(dataset)
     elif args.action == "rate":
-        max_rate_per_test(dataset)
+        max_rate_per_test(dataset, ceiling_rate)
     elif args.action == "time":
         total_time(dataset)
     elif args.action == "checksum":

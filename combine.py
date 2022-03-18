@@ -36,6 +36,61 @@ def load_stats(stats_path):
         dataset = json.loads(stats_file.read())
         return dataset
 
+def get_range(data):
+    minimum = None
+    maximum = None
+    for value in data:
+        if minimum == None or value < minimum:
+            minimum = value
+        if maximum == None or value > maximum:
+            maximum = value
+    return (minimum, maximum)
+
+def get_average(data):
+    return round(sum(data)/len(data))
+
+def merge(all_stats):
+    best_envs = []
+    for dataset in all_stats:
+        res = dict()
+        for key in dataset[1]:
+            if key != "randomSeed":
+                for testKey in dataset[1][key]:
+                    if testKey != "params":
+                        value = dataset[1][key][testKey]["weak"]
+                        time = dataset[1][key][testKey]["durationSeconds"]
+                        rate = round(value/time, 3)
+                        if testKey not in res:
+                            res[testKey] = (key, rate)
+                        elif res[testKey][1] < rate:
+                            res[testKey] = (key, rate)
+        best_envs.append(res)
+    all_params = dict()
+    for i in range(len(best_envs)):
+        stats = all_stats[i][1]
+        envs = best_envs[i]
+        for test in envs.keys():
+            i = envs[test][0]
+            for key in stats[i]["params"]:
+                if key not in all_params:
+                    all_params[key] = [stats[i]["params"][key]]
+                else:
+                    all_params[key].append(stats[i]["params"][key])
+    merged_params = dict()
+    keys_to_average = ["shufflePct", "barrierPct", "memStressPct", "preStressPct", "memStride", "stressLineSize", "memStressIterations", "preStressIterations", "stressStrategyBalancePct", "memStressStoreFirstPct", "memStressStoreSecondPct", "preStressStoreFirstPct", "preStressStoreSecondPct"]
+    for key in keys_to_average:
+        merged_params[key] = get_average(all_params[key])
+    (minTestingWorkgroups, maxTestingWorkgroups) = get_range(all_params["testingWorkgroups"])
+    merged_params["testingWorkgroups"] = maxTestingWorkgroups
+    merged_params["minTestingWorkgroups"] = minTestingWorkgroups
+    merged_params["maxWorkgroups"] = get_range(all_params["maxWorkgroups"])[1]
+    (minStressTargetLines, stressTargetLines) = get_range(all_params["stressTargetLines"])
+    merged_params["stressTargetLines"] = stressTargetLines
+    merged_params["minStressTargetLines"] = minStressTargetLines
+    merged_params["scratchMemorySize"] = 32 * stressTargetLines * merged_params["stressLineSize"]
+    with open('merged_params.json', 'w') as f:
+        json.dump(merged_params, f, indent=4)
+
 def analyze_global(all_stats, to_max, calculate, compare, initial_best, ceiling_rate):
     testKeys = []
     best = initial_best
@@ -255,7 +310,7 @@ def get_ceiling_rate(reproducibility, time_budget):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("stats_dir", help="Directory of stats files to combine")
-    parser.add_argument("--action", default="log-rate", help="Analysis to perform. Options are 'rate', 'log-rate', 'ceiling-log-rate', 'ceiling-rate', 'global-log-rate' , 'global-ceiling-log-rate', 'global-ceiling-rate'")
+    parser.add_argument("--action", default="log-rate", help="Analysis to perform. Options are 'rate', 'log-rate', 'ceiling-log-rate', 'ceiling-rate', 'global-log-rate' , 'global-ceiling-log-rate', 'global-ceiling-rate', 'merge'")
     parser.add_argument("--rep", default="99.999", help="Level of reproducibility.")
     parser.add_argument("--budget", default="3", help="Time budget per test (seconds)")
     args = parser.parse_args()
@@ -277,6 +332,8 @@ def main():
         max_global_ceiling_rate(all_stats, ceiling_rate)
     elif args.action == "ceiling-rate":
         max_ceiling_rate(all_stats, ceiling_rate)
+    elif args.action == "merge":
+        merge(all_stats)
 
 if __name__ == "__main__":
     main()
