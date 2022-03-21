@@ -70,12 +70,13 @@ def merge(all_stats):
         stats = all_stats[i][1]
         envs = best_envs[i]
         for test in envs.keys():
-            i = envs[test][0]
-            for key in stats[i]["params"]:
-                if key not in all_params:
-                    all_params[key] = [stats[i]["params"][key]]
-                else:
-                    all_params[key].append(stats[i]["params"][key])
+            (i, rate) = envs[test]
+            if rate > 0:
+                for key in stats[i]["params"]:
+                    if key not in all_params:
+                        all_params[key] = [stats[i]["params"][key]]
+                    else:
+                        all_params[key].append(stats[i]["params"][key])
     merged_params = dict()
     keys_to_average = ["shufflePct", "barrierPct", "memStressPct", "preStressPct", "memStride", "stressLineSize", "memStressIterations", "preStressIterations", "stressStrategyBalancePct", "memStressStoreFirstPct", "memStressStoreSecondPct", "preStressStoreFirstPct", "preStressStoreSecondPct"]
     for key in keys_to_average:

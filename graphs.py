@@ -10,44 +10,44 @@ def figure1():
     si_no_stress_weak_means = take_log([0, 0, 0, 0])
     si_no_stress_all_means = take_log([2.423, 0.031, 0, 8.92])
 
-    si_co_means = take_log([24.333, 53.378, 4.8, 33.28])
-    si_co_weak_means = take_log([15.438, 22.295, 1.446, 0])
-    si_weak_means = take_log([8.01, 9.429, 0.458, 0])
-    si_all_means = take_log([13.483, 22.829, 1.729, 8.32])
+    si_co_means = take_log([24.333, 53.378, 12.21, 33.28]) # Update
+    si_co_weak_means = take_log([15.438, 22.295, 0, 0]) # Update
+    si_weak_means = take_log([8.01, 9.429, 0.076, 0]) # Update
+    si_all_means = take_log([13.483, 22.829, 3.095, 8.32]) # Update
 
-    parallel_no_stress_co_means = take_log([8007.971, 15160.747, 354670.514, 13745.04])
-    parallel_no_stress_co_weak_means = take_log([47.859, 111.277, 990.374, 254.645])
-    parallel_no_stress_weak_means = take_log([3.628, 26.284, 316.912, 85.317])
-    parallel_no_stress_all_means = take_log([2013.007, 3825.836, 89031.586, 3531.997])
+    parallel_no_stress_co_means = take_log([8007.971, 15160.747, 351400.851, 13745.04])
+    parallel_no_stress_co_weak_means = take_log([47.859, 111.277, 1392.796, 254.645])
+    parallel_no_stress_weak_means = take_log([3.628, 26.284, 473.94, 85.317])
+    parallel_no_stress_all_means = take_log([2013.007, 3825.836, 88377.953, 3531.997])
 
-    parallel_co_means = take_log([22089.78, 58313.47, 251531.069, 6561.868])
-    parallel_co_weak_means = take_log([81.543, 25100.945, 5349.179, 218.6])
-    parallel_weak_means = take_log([15.676, 6994.569, 1816.608, 72.466])
-    parallel_all_means = take_log([5546.552, 23219.239, 64907.58, 1722.217])
+    parallel_co_means = take_log([22089.78, 58313.47, 428440.361, 6561.868])
+    parallel_co_weak_means = take_log([81.543, 25100.945, 5682.515, 218.6])
+    parallel_weak_means = take_log([15.676, 6994.569, 2421.041, 72.466])
+    parallel_all_means = take_log([5546.552, 23219.239, 109537.397, 1722.217])
 
-    total_means = take_log([2.843, 12.818, 24600.607, 19430.725])
+    total_means = take_log([2.843, 12.818, 24437.198, 35006.351]) # Update
 
-    si_no_stress_weak_caught = take_pct([0, 0, 0, 0], 18)
-    si_no_stress_weak_co_caught = take_pct([0, 0, 0, 0], 6)
-    si_no_stress_co_caught = take_pct([3, 2, 0, 3], 8)
-    si_no_stress_all_caught = take_pct([3, 2, 0, 3], 32)
+    si_no_stress_weak_caught = take_pct([0, 0, 0, 0], 18) # Update
+    si_no_stress_weak_co_caught = take_pct([0, 0, 0, 0], 6) # Update
+    si_no_stress_co_caught = take_pct([3, 2, 0, 3], 8) # Update
+    si_no_stress_all_caught = take_pct([3, 2, 0, 3], 32) # Update
 
-    si_weak_caught = take_pct([12, 8, 6, 0], 18)
-    si_weak_co_caught = take_pct([6, 4, 6, 0], 6)
-    si_co_caught = take_pct([7, 5, 8, 6], 8)
-    si_all_caught = take_pct([25, 17, 20, 6], 32)
+    si_weak_caught = take_pct([12, 8, 3, 0], 18) # Update
+    si_weak_co_caught = take_pct([6, 4, 0, 0], 6) # Update
+    si_co_caught = take_pct([7, 5, 8, 6], 8) # Update
+    si_all_caught = take_pct([25, 17, 11, 6], 32) # Update
 
-    parallel_no_stress_weak_caught = take_pct([5, 9, 6, 6], 18)
-    parallel_no_stress_weak_co_caught = take_pct([6, 6, 6, 6], 6)
-    parallel_no_stress_co_caught = take_pct([8, 7, 8, 8], 8)
-    parallel_no_stress_all_caught = take_pct([19, 22, 20, 20], 32)
+    parallel_no_stress_weak_caught = take_pct([5, 9, 18, 6], 18) # Update
+    parallel_no_stress_weak_co_caught = take_pct([6, 6, 6, 6], 6) # Update
+    parallel_no_stress_co_caught = take_pct([8, 7, 8, 8], 8) # Update
+    parallel_no_stress_all_caught = take_pct([19, 22, 32, 20], 32) # Update
 
-    parallel_weak_caught = take_pct([7, 17, 6, 10], 18)
+    parallel_weak_caught = take_pct([7, 17, 18, 10], 18)
     parallel_weak_co_caught = take_pct([6, 6, 6, 6], 6)
     parallel_co_caught = take_pct([8, 7, 8, 8], 8)
-    parallel_all_caught = take_pct([21, 30, 20, 24], 32)
+    parallel_all_caught = take_pct([21, 30, 32, 24], 32)
 
-    total_caught = take_pct([8, 70, 81, 95], 128)
+    total_caught = take_pct([8, 59, 93, 107], 128) # Update
 
     x = np.arange(len(labels))
     y = np.arange(0, 110, 20)
