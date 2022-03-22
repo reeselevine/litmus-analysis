@@ -139,6 +139,70 @@ def figure1():
     plt.tight_layout(rect=[0,0,1,.95])
     plt.savefig("initial_results.pdf")
 
+def figure2():
+    labels = ["1/1024", "1/512", "1/256", "1/128", "1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4", "8", "16", "32", "64", "128"]
+    pct_labels = ["0%", "20%", "40%", "60%", "80%", "100%"]
+
+    p_rep_59s_intel = [6, 7, 7, 8, 8, 8, 9, 9, 13, 19, 20, 20, 20, 20, 20, 20, 21, 21]
+    p_rep_59s_amd = [12, 13, 14, 19, 20, 20, 21, 21, 23, 25, 26, 27, 27, 27, 29, 29, 28, 28]
+    p_rep_59s_nvidia = [6, 9, 19, 19, 22, 26, 31, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32]
+    p_rep_59s_m1 = [0, 6, 6, 6, 6, 6, 9, 18, 18, 18, 19, 20, 20, 20, 20, 22, 24, 24]
+
+    s_rep_59s_intel = [0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 8, 14, 18, 19, 24, 23, 24, 24]
+    s_rep_59s_amd = [0, 0, 0, 0, 0, 0, 0, 1, 6, 7, 7, 9, 12, 15, 16, 17, 17, 17]
+    s_rep_59s_nvidia = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 6, 7, 9, 8, 8]
+    s_rep_59s_m1 = [0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 5, 6, 6, 6, 6, 6, 6, 6]
+
+    s_rep_59s_total = take_pct([0, 0, 0, 0, 0, 0, 0, 1, 9, 15, 24, 34, 42, 46, 53, 55, 55, 55], 128)
+    p_rep_59s_total = take_pct([24, 35, 46, 52, 56, 60, 70, 80, 86, 94, 97, 99, 99, 99, 101, 103, 105, 105], 128)
+
+    s_rep_99_total = take_pct([0, 0, 0, 0, 0, 0, 3, 10, 16, 25, 34, 44, 47, 53, 55, 55, 55, 55], 128)
+    p_rep_99_total = take_pct([38, 47, 54, 57, 63, 74, 82, 89, 94, 98, 99, 99, 99, 101, 104, 105, 105, 105], 128)
+
+    s_rep_98_total = take_pct([0, 0, 0, 0, 0, 0, 7, 13, 18, 28, 40, 44, 49, 53, 55, 55, 55, 55], 128)
+    p_rep_98_total = take_pct([40, 47, 54, 57, 65, 80, 85, 93, 95, 99, 99, 99, 99, 102, 104, 105, 105, 105], 128)
+
+    s_rep_95_total = take_pct([0, 0, 0, 0, 0, 1, 9, 15, 24, 34, 42, 46, 53, 55, 55, 55, 55, 55], 128)
+    p_rep_95_total = take_pct([46, 52, 56, 60, 70, 80, 86, 94, 97, 99, 99, 99, 101, 103, 105, 105, 105, 105], 128)
+
+    x = np.arange(len(labels))
+    y = np.arange(0, 110, 20)
+    width = 0.3
+    fig, (ax2, ax3, ax4, ax5) = plt.subplots(1, 4, figsize=(15, 4))
+
+    ax2.bar(x - .5 * width, s_rep_99_total, width, label="single instance")
+    ax2.bar(x + .5 * width, p_rep_99_total, width, label="parallel")
+    ax2.set_ylim([0, 100])
+    ax2.set_xticks(x, labels, fontsize=6, rotation=45)
+    ax2.set_yticks(y, pct_labels, fontsize=8)
+    ax2.set_ylabel("Mutants Killed")
+
+    ax3.bar(x - .5 * width, s_rep_98_total, width)
+    ax3.bar(x + .5 * width, p_rep_98_total, width)
+    ax3.set_ylim([0, 100])
+    ax3.set_xticks(x, labels, fontsize=6, rotation=45)
+    ax3.set_yticks(y, pct_labels, fontsize=8)
+
+    ax4.bar(x - .5 * width, s_rep_95_total, width)
+    ax4.bar(x + .5 * width, p_rep_95_total, width)
+    ax4.set_ylim([0, 100])
+    ax4.set_xticks(x, labels, fontsize=6, rotation=45)
+    ax4.set_yticks(y, pct_labels, fontsize=8)
+
+    ax5.bar(x - .5 * width, s_rep_59s_total, width, label="single instance")
+    ax5.bar(x + .5 * width, p_rep_59s_total, width, label="parallel")
+    ax5.set_ylim([0, 100])
+    ax5.set_xticks(x, labels, fontsize=6, rotation=45)
+    ax5.set_yticks(y, pct_labels, fontsize=8)
+
+    ax5.set_title("All Devices")
+
+    fig.supxlabel("Time (seconds)")
+    fig.legend(loc=(0.05, 0.93), fontsize=8, ncol=2)
+    plt.tight_layout(rect=[0,0,1,.95])
+    plt.savefig("merged.pdf")
+
+
 def reproducibility():
     labels = ["1/512", "1/256", "1/128", "1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4", "8"]
     parallel_no_stress = [9, 14, 17, 19, 24, 26, 27, 31, 32, 32, 37, 37, 38]
@@ -488,8 +552,8 @@ def grouped_bar():
 #reproducible()
 #max_rate_per_test()
 figure1()
-reproducibility()
-global_reproducibility()
+figure2()
+#global_reproducibility()
 #per_test_vs_global()
 #per_test_vs_global_total()
 #time_budget()

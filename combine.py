@@ -1,6 +1,7 @@
 import json
 import argparse
 import math
+import statistics
 from os import listdir
 
 class RateSumResult:
@@ -24,7 +25,7 @@ class MaxTestsResult:
 
 def compare_max_tests_results(cur, best):
         if cur.rep_tests == best.rep_tests:
-            return cur.log_of_rest > best.log_of_rest
+            return cur.log_of_rest >= best.log_of_rest
         else:
             return cur.rep_tests > best.rep_tests
 
@@ -48,6 +49,9 @@ def get_range(data):
 
 def get_average(data):
     return round(sum(data)/len(data))
+
+def get_median(data):
+    return round(statistics.median(data))
 
 def merge(all_stats):
     best_envs = []
@@ -78,17 +82,12 @@ def merge(all_stats):
                     else:
                         all_params[key].append(stats[i]["params"][key])
     merged_params = dict()
-    keys_to_average = ["shufflePct", "barrierPct", "memStressPct", "preStressPct", "memStride", "stressLineSize", "memStressIterations", "preStressIterations", "stressStrategyBalancePct", "memStressStoreFirstPct", "memStressStoreSecondPct", "preStressStoreFirstPct", "preStressStoreSecondPct"]
+    keys_to_average = ["shufflePct", "barrierPct", "memStressPct", "preStressPct", "memStride", "stressLineSize", "memStressIterations", "preStressIterations", "stressStrategyBalancePct", "memStressStoreFirstPct", "memStressStoreSecondPct", "preStressStoreFirstPct", "preStressStoreSecondPct", "stressTargetLines", "maxWorkgroups", "testingWorkgroups"]
     for key in keys_to_average:
         merged_params[key] = get_average(all_params[key])
-    (minTestingWorkgroups, maxTestingWorkgroups) = get_range(all_params["testingWorkgroups"])
-    merged_params["testingWorkgroups"] = maxTestingWorkgroups
-    merged_params["minTestingWorkgroups"] = minTestingWorkgroups
-    merged_params["maxWorkgroups"] = get_range(all_params["maxWorkgroups"])[1]
-    (minStressTargetLines, stressTargetLines) = get_range(all_params["stressTargetLines"])
-    merged_params["stressTargetLines"] = stressTargetLines
-    merged_params["minStressTargetLines"] = minStressTargetLines
-    merged_params["scratchMemorySize"] = 32 * stressTargetLines * merged_params["stressLineSize"]
+    merged_params["minTestingWorkgroups"] = merged_params["testingWorkgroups"]
+    merged_params["minStressTargetLines"] = merged_params["stressTargetLines"]
+    merged_params["scratchMemorySize"] = 32 * merged_params["stressTargetLines"] * merged_params["stressLineSize"]
     with open('merged_params.json', 'w') as f:
         json.dump(merged_params, f, indent=4)
 
@@ -109,14 +108,16 @@ def analyze_global(all_stats, to_max, calculate, compare, initial_best, ceiling_
     maximized = 0
     maximized_tests = dict()
     total_maxed = 0
-    rates = []
+    rates = dict()
     log_rates = []
     for stats in all_stats:
         maximized_tests[stats[0]] = 0
+        rates[stats[0]] = []
     for test in testKeys:
         maxed_rates = 0
         for stats in all_stats:
             rate = calculate_rate(stats, best_iter, test)
+            rates[stats[0]].append(rate)
             if rate >= ceiling_rate:
                 maximized_tests[stats[0]] = maximized_tests[stats[0]] + 1
                 maxed_rates += 1
@@ -127,16 +128,21 @@ def analyze_global(all_stats, to_max, calculate, compare, initial_best, ceiling_
     print("Best: {} in iteration {}".format(best, best_iter))
     print("Number of Tests Reproducible on All Devices: {}".format(maximized))
     print("Number of Tests Reproducible: {}".format(total_maxed))
-
+    for stats in all_stats:
+        print("Average rate for {}: {}".format(stats[0], round(sum(rates[stats[0]])/len(rates[stats[0]]), 3)))
 
 def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceiling_rate):
     tests = {}
+    max_time = 0
     for key in all_stats[0][1]["0"]:
         if key != "params":
             tests[key] = (None, initial_best)
     for key in all_stats[0][1]:
         if key != "randomSeed":
             for testKey in tests.keys():
+                for stats in all_stats:
+                    if stats[1][key][testKey]["durationSeconds"] > max_time:
+                        max_time = stats[1][key][testKey]["durationSeconds"]
                 result = calculate(all_stats, key, testKey)
                 if compare(result, tests[testKey][1]):
                     tests[testKey] = (key, result)
@@ -148,20 +154,18 @@ def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceilin
         maximized_tests[stats[0]] = 0
     for res in tests.items():
         maxed_rates = 0
-        #print("{}: {} in iteration {}".format(res[0], str(res[1][1]), res[1][0]))
-        #print ("  Details:")
         for stats in all_stats:
             if calculate_rate(stats, res[1][0], res[0]) >= ceiling_rate:
                 maximized_tests[stats[0]] = maximized_tests[stats[0]] + 1
                 maxed_rates += 1
                 total_maxed += 1
-            #print("    {}: {}".format(stats[0], stats[1][res[1][0]][res[0]]))
         if maxed_rates == len(all_stats):
             maximized += 1
-        #print()
+    print("Max Test Duration: {}".format(max_time))
     print("Number of Tests Reproducible on All Devices: {}".format(maximized))
     print("Number of Tests Reproducible: {}".format(total_maxed))
     print(maximized_tests)
+    return maximized_tests
 
 
 def compare_greater_than(a, b):
@@ -222,16 +226,16 @@ def max_rate(all_stats, ceiling_rate):
 
 def max_log_rate(all_stats, ceiling_rate):
     def max_log(all_stats, key, testKey):
+        result = MaxTestsResult(0, 0)
         rate_sum = 0
-        min_rate = None
         for stats in all_stats:
             rate = calculate_rate(stats, key, testKey)
-            rate_sum += math.log(rate + 1)
-            if min_rate == None or rate < min_rate:
-                min_rate = rate
-        return RateSumResult(rate_sum, min_rate)
+            result.log_of_rest += math.log(rate + 1)
+            if rate > 0:
+                result.rep_tests += 1
+        return result
 
-    analyze_combined(all_stats, "log rate", max_log, compare_rate_sum, RateSumResult(0, 0), ceiling_rate)
+    analyze_combined(all_stats, "log rate", max_log, compare_max_tests_results, MaxTestsResult(0, 0), ceiling_rate)
 
 def max_ceiling_rate(all_stats, ceiling_rate):
     def max_ceiling(all_stats, key, testKey):
@@ -244,7 +248,23 @@ def max_ceiling_rate(all_stats, ceiling_rate):
                 result.log_of_rest += math.log(rate + 1)
         return result
 
-    analyze_combined(all_stats, "ceiling rate", max_ceiling, compare_max_tests_results, MaxTestsResult(0, 0), ceiling_rate)
+    return analyze_combined(all_stats, "ceiling rate", max_ceiling, compare_max_tests_results, MaxTestsResult(0, 0), ceiling_rate)
+
+def max_ceiling_rate_all(all_stats, rep):
+    budgets = [1/1024, 1/512, 1/256, 1/128, 1/64, 1/32, 1/16, 1/8, 1/4, 1/2, 1, 2, 4, 8, 16, 32, 64, 128]
+    total_res = dict()
+    total_res["all"] = []
+    for stats in all_stats:
+        total_res[stats[0]] = []
+    for b in budgets:
+        ceiling_rate = get_ceiling_rate(rep, b)
+        results = max_ceiling_rate(all_stats, ceiling_rate)
+        total = 0
+        for key in results.keys():
+            total += results[key]
+            total_res[key].append(results[key])
+        total_res["all"].append(total)
+    print(total_res)
 
 
 def max_ceiling_log_rate(all_stats, ceiling_rate):
@@ -277,17 +297,16 @@ def max_global_ceiling_rate(all_stats, ceiling_rate):
 
 def max_global_log_rate(all_stats, ceiling_rate):
     def max_log_ceiling(all_stats, key, testKeys):
-        rate_sum = 0
-        min_rate = None
+        result = MaxTestsResult(0, 0)
         for stats in all_stats:
             for testKey in testKeys:
                 rate = calculate_rate(stats, key, testKey)
-                rate_sum += math.log(rate + 1)
-                if min_rate == None or rate < min_rate:
-                    min_rate = rate
-        return RateSumResult(rate_sum, min_rate)
+                result.log_of_rest += math.log(rate + 1)
+                if rate > 0:
+                    result.rep_tests += 1
+        return result
 
-    analyze_global(all_stats, "global log rate", max_log_ceiling, compare_rate_sum, RateSumResult(0, 0), ceiling_rate)
+    analyze_global(all_stats, "global log rate", max_log_ceiling, compare_max_tests_results, MaxTestsResult(0, 0), ceiling_rate)
 
 def max_global_ceiling_log_rate(all_stats, ceiling_rate):
     def max_log_ceiling(all_stats, key, testKeys):
@@ -311,7 +330,7 @@ def get_ceiling_rate(reproducibility, time_budget):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("stats_dir", help="Directory of stats files to combine")
-    parser.add_argument("--action", default="log-rate", help="Analysis to perform. Options are 'rate', 'log-rate', 'ceiling-log-rate', 'ceiling-rate', 'global-log-rate' , 'global-ceiling-log-rate', 'global-ceiling-rate', 'merge'")
+    parser.add_argument("--action", default="log-rate", help="Analysis to perform. Options are 'rate', 'log-rate', 'ceiling-log-rate', 'ceiling-rate', 'global-log-rate' , 'global-ceiling-log-rate', 'global-ceiling-rate', 'merge', 'ceiilng-rate-all'")
     parser.add_argument("--rep", default="99.999", help="Level of reproducibility.")
     parser.add_argument("--budget", default="3", help="Time budget per test (seconds)")
     args = parser.parse_args()
@@ -335,6 +354,8 @@ def main():
         max_ceiling_rate(all_stats, ceiling_rate)
     elif args.action == "merge":
         merge(all_stats)
+    elif args.action == "ceiling-rate-all":
+        max_ceiling_rate_all(all_stats, float(args.rep)/100)
 
 if __name__ == "__main__":
     main()
