@@ -61,7 +61,7 @@ def figure1():
     ax1.set_ylim([0, 100])
     ax1.set_yticks(y, pct_labels, fontsize=8)
     ax1.set_xticks(x, labels)
-    ax1.set_ylabel("Mutants Killed", fontsize=10)
+    ax1.set_ylabel("Mutation Score", fontsize=10)
     ax1.set_title("Reversing po")
     ax2.bar(x - 1.5 * width, si_no_stress_weak_co_caught, width)
     ax2.bar(x - .5 * width, si_weak_co_caught, width)
@@ -97,43 +97,43 @@ def figure1():
     axA.set_title("All Devices/Tests")
 
     log_labels = ["0", "1", "10", "100", "1,000", "10,000", "100,000"]
-    y = np.arange(7)
+    y = [0, 1, 10, 100, 1000, 10000, 100000]
     ax5.bar(x - 1.5 * width, si_no_stress_co_means, width)
     ax5.bar(x - .5 * width, si_co_means, width)
     ax5.bar(x + .5 * width, parallel_no_stress_co_means, width)
     ax5.bar(x + 1.5 * width, parallel_co_means, width)
-    ax5.set_ylim([0, 6])
+    ax5.set_yscale('symlog')
     ax5.set_yticks(y, log_labels, fontsize=8)
     ax5.set_xticks(x, labels)
     ax6.bar(x - 1.5 * width, si_no_stress_co_weak_means, width)
     ax6.bar(x - .5 * width, si_co_weak_means, width)
     ax6.bar(x + .5 * width, parallel_no_stress_co_weak_means, width)
     ax6.bar(x + 1.5 * width, parallel_co_weak_means, width)
-    ax6.set_ylim([0, 6])
+    ax6.set_yscale('symlog')
     ax6.set_yticks(y, log_labels, fontsize=8)
     ax6.set_xticks(x, labels)
-    ax7.bar(x - 1.5 * width, si_no_stress_weak_means, width, label="Single Instance No Stress")
-    ax7.bar(x - .5 * width, si_weak_means, width, label="Single Instance")
-    ax7.bar(x + .5 * width, parallel_no_stress_weak_means, width, label="Parallel No Stress")
-    ax7.bar(x + 1.5 * width, parallel_weak_means, width, label="Parallel")
-    ax7.set_ylim([0, 6])
+    ax7.bar(x - 1.5 * width, si_no_stress_weak_means, width, label="SI No Stress")
+    ax7.bar(x - .5 * width, si_weak_means, width, label="SI")
+    ax7.bar(x + .5 * width, parallel_no_stress_weak_means, width, label="P No Stress")
+    ax7.bar(x + 1.5 * width, parallel_weak_means, width, label="P")
+    ax7.set_yscale('symlog')
     ax7.set_yticks(y, log_labels, fontsize=8)
     ax7.set_xticks(x, labels)
     ax8.bar(x - 1.5 * width, si_no_stress_all_means, width)
     ax8.bar(x - .5 * width, si_all_means, width)
     ax8.bar(x + .5 * width, parallel_no_stress_all_means, width)
     ax8.bar(x + 1.5 * width, parallel_all_means, width)
-    ax8.set_ylim([0, 6])
+    ax8.set_yscale('symlog')
     ax8.set_xticks(x, labels)
     ax8.set_yticks(y, log_labels, fontsize=8)
-    ax5.set_ylabel("Mutants Killed Per Second", fontsize=10)
+    ax5.set_ylabel("Mutant Death Rate (sec)", fontsize=10)
     axB.bar([-1.5*width], total_means[0], width)
     axB.bar([-.5*width], total_means[1], width)
     axB.bar([.5*width], total_means[2], width)
     axB.bar([1.5*width], total_means[3], width)
     axB.set_xticks([0], ["Total"])
+    axB.set_yscale('symlog')
     axB.set_yticks(y, log_labels, fontsize=8)
-    axB.set_ylim([0, 6])
 
     fig.legend(loc=(0.05, 0.93), fontsize=8, ncol=4)
     plt.tight_layout(rect=[0,0,1,.95])
@@ -167,40 +167,56 @@ def figure2():
 
     x = np.arange(len(labels))
     y = np.arange(0, 110, 20)
-    width = 0.3
-    fig, (ax2, ax3, ax4, ax5) = plt.subplots(1, 4, figsize=(15, 4))
+    width = 0.2
+    fig, ax2 = plt.subplots(1, 1, figsize=(6, 4))
 
-    ax2.bar(x - .5 * width, s_rep_99_total, width, label="single instance")
-    ax2.bar(x + .5 * width, p_rep_99_total, width, label="parallel")
+    ax2.bar(x - 1.5 * width, s_rep_99_total, width, label="SI 95% Rep")
+    ax2.bar(x - .5 * width, s_rep_59s_total, width, label="SI 99.999% Rep")
+    ax2.bar(x + .5 * width, p_rep_99_total, width, label="P 95% Rep")
+    ax2.bar(x + 1.5 * width, p_rep_59s_total, width, label="P 99.999% Rep")
     ax2.set_ylim([0, 100])
     ax2.set_xticks(x, labels, fontsize=6, rotation=45)
     ax2.set_yticks(y, pct_labels, fontsize=8)
-    ax2.set_ylabel("Mutants Killed")
+    ax2.set_ylabel("Mutation Score")
+    ax2.set_title("All Devices")
 
-    ax3.bar(x - .5 * width, s_rep_98_total, width)
-    ax3.bar(x + .5 * width, p_rep_98_total, width)
-    ax3.set_ylim([0, 100])
-    ax3.set_xticks(x, labels, fontsize=6, rotation=45)
-    ax3.set_yticks(y, pct_labels, fontsize=8)
-
-    ax4.bar(x - .5 * width, s_rep_95_total, width)
-    ax4.bar(x + .5 * width, p_rep_95_total, width)
-    ax4.set_ylim([0, 100])
-    ax4.set_xticks(x, labels, fontsize=6, rotation=45)
-    ax4.set_yticks(y, pct_labels, fontsize=8)
-
-    ax5.bar(x - .5 * width, s_rep_59s_total, width, label="single instance")
-    ax5.bar(x + .5 * width, p_rep_59s_total, width, label="parallel")
-    ax5.set_ylim([0, 100])
-    ax5.set_xticks(x, labels, fontsize=6, rotation=45)
-    ax5.set_yticks(y, pct_labels, fontsize=8)
-
-    ax5.set_title("All Devices")
-
-    fig.supxlabel("Time (seconds)")
-    fig.legend(loc=(0.05, 0.93), fontsize=8, ncol=2)
-    plt.tight_layout(rect=[0,0,1,.95])
+    fig.supxlabel("Per Test Budget (sec)")
+    fig.legend(loc=(0.15, 0.7), fontsize=8, ncol=1)
+    plt.tight_layout(rect=[0,0,1,1])
     plt.savefig("merged.pdf")
+
+
+def figure3():
+    labels = ["Intel", "AMD", "Nvidia", "M1"]
+    colors = ["blue", "blue", "blue", "blue", "red"]
+    log_labels = ["0", "1", "10", "100", "1,000", "10,000", "100,000", "1,000,000"]
+    y = [0, 1, 10, 100, 1000, 10000, 100000, 1000000]
+
+    rr = take_log([4454.376, 91.566, 418536.854, 7919.699, 0])
+    rr_bug = take_log([0, 0, 0, 0, 4416.66])
+    mp = take_log([36.06, 805.204, 2817.98, 119.689, 0])
+    mp_bug = take_log([0, 0, 0, 0, 805.204])
+    x = np.arange(len(labels) + 1)
+    width = 0.5
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 2.5))
+
+    ax1.bar(x, rr, width)
+    ax1.bar(x, rr_bug, width)
+    ax1.set_xticks(x, labels + ["Bug (Intel)"], fontsize=8, rotation=45)
+    ax1.set_ylabel("Death Rate")
+    ax1.set_title("CoRR")
+    ax1.set_yscale('symlog')
+    ax1.set_yticks(y, log_labels, fontsize=8)
+
+    ax2.bar(x, mp, width)
+    ax2.bar(x, mp_bug, width)
+    ax2.set_xticks(x, labels + ["Bug (AMD)"], fontsize=8, rotation=45)
+    ax2.set_title("Message Passing")
+    ax2.set_yscale('symlog')
+    ax2.set_yticks(y[0:-2], log_labels[0:-2], fontsize=8)
+
+    plt.tight_layout()
+    plt.savefig("drill_down.pdf")
 
 
 def reproducibility():
@@ -410,7 +426,14 @@ def scatter_colors(parallel, legacy):
     return colors
 
 def take_log(data, base=10):
-    return [math.log(v + 1, base) for v in data]
+    return data
+    ret = []
+    for v in data:
+        if v < 10:
+            ret.append(v)
+        else:
+            ret.append(math.log(v, base))
+    return ret
 
 def take_pct(data, total):
     return [v/total * 100 for v in data]
@@ -553,6 +576,7 @@ def grouped_bar():
 #max_rate_per_test()
 figure1()
 figure2()
+figure3()
 #global_reproducibility()
 #per_test_vs_global()
 #per_test_vs_global_total()

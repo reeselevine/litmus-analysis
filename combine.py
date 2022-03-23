@@ -134,6 +134,8 @@ def analyze_global(all_stats, to_max, calculate, compare, initial_best, ceiling_
 def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceiling_rate):
     tests = {}
     max_time = 0
+    total_ti = 0
+    total_time = 0
     for key in all_stats[0][1]["0"]:
         if key != "params":
             tests[key] = (None, initial_best)
@@ -141,30 +143,51 @@ def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceilin
         if key != "randomSeed":
             for testKey in tests.keys():
                 for stats in all_stats:
+                    total_ti += stats[1][key][testKey]["seq"] + stats[1][key][testKey]["interleaved"] + stats[1][key][testKey]["weak"]
+                    total_time += stats[1][key][testKey]["durationSeconds"]
                     if stats[1][key][testKey]["durationSeconds"] > max_time:
                         max_time = stats[1][key][testKey]["durationSeconds"]
                 result = calculate(all_stats, key, testKey)
                 if compare(result, tests[testKey][1]):
                     tests[testKey] = (key, result)
+    print("Average rate across tuning: {}, total time tuning: {}".format(total_ti/total_time, total_time))
     print("Maximizing {} of weak behaviors".format(to_max))
+    print("Ceiling rate: {}".format(ceiling_rate))
     maximized = 0
     maximized_tests = dict()
     total_maxed = 0
+    total_ti = 0
+    total_time = 0
+    ratios = dict()
+    min_ratio = None
     for stats in all_stats:
         maximized_tests[stats[0]] = 0
     for res in tests.items():
         maxed_rates = 0
+        ratios[res[0]] = 0
         for stats in all_stats:
+            weak_ti = stats[1][res[1][0]][res[0]]["weak"]
+            all_ti = stats[1][res[1][0]][res[0]]["interleaved"] + stats[1][res[1][0]][res[0]]["seq"] + weak_ti
+            ratios[res[0] + " " + stats[0]] = weak_ti/all_ti
+            if weak_ti > 0 and (min_ratio == None or ratios[min_ratio] > ratios[res[0] + " " + stats[0]]):
+                min_ratio = res[0] + " " + stats[0]
+            total_ti += stats[1][res[1][0]][res[0]]["seq"] + stats[1][res[1][0]][res[0]]["interleaved"] + stats[1][res[1][0]][res[0]]["weak"]
+            total_time += stats[1][res[1][0]][res[0]]["durationSeconds"]
+            rate = calculate_rate(stats, res[1][0], res[0])
+            print("Rate for {} on {} in iteration {}: {}".format(res[0], stats[0], res[1][0], rate))
             if calculate_rate(stats, res[1][0], res[0]) >= ceiling_rate:
                 maximized_tests[stats[0]] = maximized_tests[stats[0]] + 1
                 maxed_rates += 1
                 total_maxed += 1
         if maxed_rates == len(all_stats):
-            maximized += 1
+           maximized += 1
     print("Max Test Duration: {}".format(max_time))
     print("Number of Tests Reproducible on All Devices: {}".format(maximized))
     print("Number of Tests Reproducible: {}".format(total_maxed))
+    print("Averaged instance rate for best strategy: {}".format(round(total_ti/total_time), 3))
     print(maximized_tests)
+    print(ratios)
+    print("test with minimum ratio: {}".format(min_ratio))
     return maximized_tests
 
 
@@ -205,6 +228,12 @@ def calculate_rate(stats, key, testKey):
     rate = round(value/time, 3)
     return rate
 
+def calculate_test_instance_rate(stats, key, testKey):
+    total_instances = stats[1][key][testKey]["seq"] + stats[1][key][testKey]["interleaved"] + stats[1][key][testKey]["weak"]
+    time = stats[1][key][testKey]["durationSeconds"]
+    return round(total_instances/time, 3)
+
+
 def max_rate(all_stats, ceiling_rate):
     def max_rate(all_stats, key, testKey):
         rate_sum = 0
@@ -242,10 +271,9 @@ def max_ceiling_rate(all_stats, ceiling_rate):
         result = MaxTestsResult(0, 0)
         for stats in all_stats:
             rate = calculate_rate(stats, key, testKey)
+            result.log_of_rest += math.log(rate + 1)
             if rate >= ceiling_rate:
                 result.rep_tests += 1
-            else:
-                result.log_of_rest += math.log(rate + 1)
         return result
 
     return analyze_combined(all_stats, "ceiling rate", max_ceiling, compare_max_tests_results, MaxTestsResult(0, 0), ceiling_rate)
