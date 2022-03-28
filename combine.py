@@ -159,18 +159,13 @@ def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceilin
     total_ti = 0
     total_time = 0
     ratios = dict()
-    min_ratio = None
     for stats in all_stats:
         maximized_tests[stats[0]] = 0
+        ratios[stats[0]] = dict()
     for res in tests.items():
         maxed_rates = 0
-        ratios[res[0]] = 0
         for stats in all_stats:
-            weak_ti = stats[1][res[1][0]][res[0]]["weak"]
-            all_ti = stats[1][res[1][0]][res[0]]["interleaved"] + stats[1][res[1][0]][res[0]]["seq"] + weak_ti
-            ratios[res[0] + " " + stats[0]] = weak_ti/all_ti
-            if weak_ti > 0 and (min_ratio == None or ratios[min_ratio] > ratios[res[0] + " " + stats[0]]):
-                min_ratio = res[0] + " " + stats[0]
+            ratios[stats[0]][res[0]] = stats[1][res[1][0]][res[0]]
             total_ti += stats[1][res[1][0]][res[0]]["seq"] + stats[1][res[1][0]][res[0]]["interleaved"] + stats[1][res[1][0]][res[0]]["weak"]
             total_time += stats[1][res[1][0]][res[0]]["durationSeconds"]
             rate = calculate_rate(stats, res[1][0], res[0])
@@ -186,8 +181,8 @@ def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceilin
     print("Number of Tests Reproducible: {}".format(total_maxed))
     print("Averaged instance rate for best strategy: {}".format(round(total_ti/total_time), 3))
     print(maximized_tests)
-    print(ratios)
-    print("test with minimum ratio: {}".format(min_ratio))
+    with open("rates.json", "w") as f:
+        json.dump(ratios, f, indent=4)
     return maximized_tests
 
 
