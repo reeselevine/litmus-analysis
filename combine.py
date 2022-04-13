@@ -15,17 +15,17 @@ class RateSumResult:
 
 class MaxTestsResult:
 
-    def __init__(self, rep_tests, log_of_rest):
+    def __init__(self, rep_tests, min_rate):
         self.rep_tests = rep_tests
-        self.log_of_rest = log_of_rest
+        self.min_rate = min_rate
 
 
     def __str__(self):
-        return "Reproducible Tests: {}, Log Sum of Rest: {}".format(self.rep_tests, self.log_of_rest)
+        return "Reproducible Tests: {}, Min Rate: {}".format(self.rep_tests, self.min_rate)
 
 def compare_max_tests_results(cur, best):
         if cur.rep_tests == best.rep_tests:
-            return cur.log_of_rest >= best.log_of_rest
+            return cur.min_rate > best.min_rate
         else:
             return cur.rep_tests > best.rep_tests
 
@@ -133,24 +133,26 @@ def analyze_global(all_stats, to_max, calculate, compare, initial_best, ceiling_
 
 def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceiling_rate):
     tests = {}
-    max_time = 0
+    min_rate = 100000000
     total_ti = 0
     total_time = 0
     for key in all_stats[0][1]["0"]:
         if key != "params":
-            tests[key] = (None, initial_best)
+            tests[key] = ('0', initial_best)
     for key in all_stats[0][1]:
         if key != "randomSeed":
             for testKey in tests.keys():
                 for stats in all_stats:
                     total_ti += stats[1][key][testKey]["seq"] + stats[1][key][testKey]["interleaved"] + stats[1][key][testKey]["weak"]
                     total_time += stats[1][key][testKey]["durationSeconds"]
-                    if stats[1][key][testKey]["durationSeconds"] > max_time:
-                        max_time = stats[1][key][testKey]["durationSeconds"]
+                    rate = stats[1][key][testKey]["weak"] / stats[1][key][testKey]["durationSeconds"]
+                    if rate > 0 and rate < min_rate:
+                        min_rate = rate
                 result = calculate(all_stats, key, testKey)
                 if compare(result, tests[testKey][1]):
                     tests[testKey] = (key, result)
     print("Average rate across tuning: {}, total time tuning: {}".format(total_ti/total_time, total_time))
+    print("Average number of instances per iteration: {}".format(total_ti/1920000))
     print("Maximizing {} of weak behaviors".format(to_max))
     print("Ceiling rate: {}".format(ceiling_rate))
     maximized = 0
@@ -165,7 +167,7 @@ def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceilin
     for res in tests.items():
         maxed_rates = 0
         for stats in all_stats:
-            ratios[stats[0]][res[0]] = stats[1][res[1][0]][res[0]]
+            ratios[stats[0]][res[0]] = (res[1][0], stats[1][res[1][0]][res[0]])
             total_ti += stats[1][res[1][0]][res[0]]["seq"] + stats[1][res[1][0]][res[0]]["interleaved"] + stats[1][res[1][0]][res[0]]["weak"]
             total_time += stats[1][res[1][0]][res[0]]["durationSeconds"]
             rate = calculate_rate(stats, res[1][0], res[0])
@@ -176,7 +178,7 @@ def analyze_combined(all_stats, to_max, calculate, compare, initial_best, ceilin
                 total_maxed += 1
         if maxed_rates == len(all_stats):
            maximized += 1
-    print("Max Test Duration: {}".format(max_time))
+    print("Max Time To See One: {}".format(1/min_rate))
     print("Number of Tests Reproducible on All Devices: {}".format(maximized))
     print("Number of Tests Reproducible: {}".format(total_maxed))
     print("Averaged instance rate for best strategy: {}".format(round(total_ti/total_time), 3))
@@ -263,15 +265,16 @@ def max_log_rate(all_stats, ceiling_rate):
 
 def max_ceiling_rate(all_stats, ceiling_rate):
     def max_ceiling(all_stats, key, testKey):
-        result = MaxTestsResult(0, 0)
+        result = MaxTestsResult(0, 10000000000)
         for stats in all_stats:
             rate = calculate_rate(stats, key, testKey)
-            result.log_of_rest += math.log(rate + 1)
             if rate >= ceiling_rate:
                 result.rep_tests += 1
+            if rate > 0:
+                result.min_rate = min(result.min_rate, rate)
         return result
 
-    return analyze_combined(all_stats, "ceiling rate", max_ceiling, compare_max_tests_results, MaxTestsResult(0, 0), ceiling_rate)
+    return analyze_combined(all_stats, "ceiling rate", max_ceiling, compare_max_tests_results, MaxTestsResult(0, 10000000000), ceiling_rate)
 
 def max_ceiling_rate_all(all_stats, rep):
     budgets = [1/1024, 1/512, 1/256, 1/128, 1/64, 1/32, 1/16, 1/8, 1/4, 1/2, 1, 2, 4, 8, 16, 32, 64, 128]
