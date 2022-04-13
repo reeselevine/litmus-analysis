@@ -1,21 +1,6 @@
 import json
 import math
-import csv
 import argparse
-import pandas
-from scipy import stats
-import matplotlib.pyplot as plt
-
-pandas.set_option('display.max_columns', None)
-pandas.set_option('display.max_rows', None)
-
-def analyze(tests, file_path):
-    df = pandas.read_csv(file_path.split(".")[0] + '.csv')
-    #print(df.describe())
-    for test in tests:
-        df.hist(column=test)
-    #print(df.corr())
-
 
 def load_stats(stats_path):
     """
@@ -32,33 +17,6 @@ def get_tests(dataset):
             tests.append(key)
     return tests
 
-def convert_to_csv(dataset, file_path):
-    """
-    Converts a stats json file to a csv, for use with python data science modules.
-    """
-    data_file = open(file_path + ".csv", 'w')
-    csv_writer = csv.writer(data_file)
-    first = True
-    for key in dataset:
-        if key != "randomSeed":
-            row = []
-            if first:
-                for testKey in dataset[key]:
-                    if testKey == "params":
-                        row += dataset[key][testKey].keys()
-                    else:
-                        row.append(testKey)
-                first = False
-                csv_writer.writerow(row)
-                row = []
-            for testKey in dataset[key]:
-                if testKey == "params":
-                    for param, value in dataset[key][testKey].items():
-                        row.append(value)
-                else:
-                    row.append(dataset[key][testKey]["weak"])
-            csv_writer.writerow(row)
-    data_file.close()
 
 def per_test(dataset, compare, update):
     """
